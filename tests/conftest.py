@@ -1,37 +1,24 @@
-import os
-
-import allure
 import pytest
-from dotenv import load_dotenv
-from selene.support.shared import browser
-
+from selene.support.jquery_style_selectors import browser
 from utils.base_session import BaseSession
-
-browser.config.base_url = "https://demowebshop.tricentis.com"
+from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
+demoshop = BaseSession('https://demowebshop.tricentis.com')
+
 
 @pytest.fixture(scope='session')
-def demoshop():
-    demoshop_session = BaseSession(os.getenv("API_URL"))
-    return demoshop_session
+def chrome_browser():
+    browser.config.base_url = 'https://demowebshop.tricentis.com'
+    browser.config.window_height = 1080
+    browser.config.window_width = 1920
 
-
-@pytest.fixture(scope='function')
-def auth_browser(demoshop):
-    response = demoshop.post("/login", json={"Email": os.getenv("LOGIN"), "Password": os.getenv("PASSWORD")}, allow_redirects=False)
-    authorization_cookie = response.cookies.get("NOPCOMMERCE.AUTH")
-
-    with allure.step("Check code"):
-        response.status_code = 302
-
+    response = demoshop.post('/login', data={'Email': os.getenv('LOGIN'), 'Password': os.getenv('PASSWORD')},
+                             allow_redirects=False)
+    authorization_cookie = response.cookies.get('NOPCOMMERCE.AUTH')
     browser.open("/Themes/DefaultClean/Content/images/logo.png")
-
-    browser.driver.add_cookie({"name": "NOPCOMMERCE.AUTH", "value": authorization_cookie})
+    browser.driver.add_cookie(
+        {"name": "NOPCOMMERCE.AUTH", "value": authorization_cookie})
     return browser
-
-
-@pytest.fixture(scope='session')
-def reqres_in():
-    return BaseSession(os.getenv("BASE_URL"))
